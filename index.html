@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SVG Studio — Mini Illustrator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app">
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">◈</span>
+        <span class="brand-text">SVG Studio</span>
+      </div>
+      <input id="docName" class="doc-name" value="Untitled" spellcheck="false" />
+
+      <div class="tb-group">
+        <button id="btnNew" class="tb">New</button>
+        <button id="btnImport" class="tb">Import</button>
+        <button id="btnExport" class="tb tb-accent">Export</button>
+        <button id="btnDownload" class="tb">Download</button>
+      </div>
+
+      <div class="tb-group">
+        <button id="btnUndo" class="tb tb-icon" title="Undo">↶</button>
+        <button id="btnRedo" class="tb tb-icon" title="Redo">↷</button>
+      </div>
+
+      <div class="spacer"></div>
+
+      <div class="tb-group tb-zoom">
+        <button id="btnZoomOut" class="tb tb-icon">−</button>
+        <button id="btnZoomReset" class="tb tb-zoom-label">100%</button>
+        <button id="btnZoomIn" class="tb tb-icon">+</button>
+        <button id="btnFit" class="tb">Fit</button>
+      </div>
+
+      <input type="file" id="fileInput" accept=".svg,image/svg+xml" hidden />
+    </header>
+
+    <div class="workspace">
+      <aside class="toolbar" id="toolbar"></aside>
+
+      <div class="stage-wrap" id="stageWrap">
+        <svg id="stage" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <clipPath id="artboardClip">
+              <rect id="clipRect" x="0" y="0" width="800" height="600" />
+            </clipPath>
+            <filter id="artShadow" x="-25%" y="-25%" width="150%" height="150%">
+              <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#000" flood-opacity="0.6" />
+            </filter>
+          </defs>
+          <g id="viewport">
+            <rect id="artboard" x="0" y="0" width="800" height="600" fill="#ffffff" filter="url(#artShadow)" />
+            <g id="gridLayer" clip-path="url(#artboardClip)"></g>
+            <g id="content"></g>
+            <g id="overlay"></g>
+          </g>
+        </svg>
+      </div>
+
+      <aside class="inspector" id="inspector">
+        <div class="insp-scroll">
+          <div id="inspEmpty" class="empty-state">
+            <div class="empty-icon">◇</div>
+            <p>Select an element<br/>to edit its properties</p>
+          </div>
+
+          <div id="inspBody" style="display:none">
+            <section class="sect">
+              <h3>Transform</h3>
+              <div class="grid2">
+                <label>X <input type="number" id="inpX" step="1" /></label>
+                <label>Y <input type="number" id="inpY" step="1" /></label>
+                <label>W <input type="number" id="inpW" step="1" min="1" /></label>
+                <label>H <input type="number" id="inpH" step="1" min="1" /></label>
+              </div>
+              <label>Rotation <input type="number" id="inpRot" step="1" /></label>
+            </section>
+
+            <section class="sect">
+              <h3>Fill</h3>
+              <div class="row">
+                <input type="color" id="fillColor" value="#7c8aff" />
+                <input type="text" id="fillHex" class="hex" value="#7c8aff" />
+                <button id="fillNone" class="mini-btn" title="No fill">∅</button>
+              </div>
+              <div class="slider-row">
+                <input type="range" id="fillOpacity" min="0" max="100" value="100" />
+                <span id="fillOpacityVal">100%</span>
+              </div>
+            </section>
+
+            <section class="sect">
+              <h3>Stroke</h3>
+              <div class="row">
+                <input type="color" id="strokeColor" value="#1e1e1e" />
+                <input type="text" id="strokeHex" class="hex" value="#1e1e1e" />
+                <button id="strokeNone" class="mini-btn" title="No stroke">∅</button>
+              </div>
+              <div class="grid2">
+                <label>Width <input type="number" id="strokeWidth" min="0" step="0.5" value="0" /></label>
+                <label>Dash
+                  <select id="strokeDash">
+                    <option value="none">Solid</option>
+                    <option value="8 5">Dashed</option>
+                    <option value="2 4">Dotted</option>
+                    <option value="14 4 2 4">Dash-dot</option>
+                  </select>
+                </label>
+              </div>
+              <div class="grid2">
+                <label>Cap
+                  <select id="strokeCap">
+                    <option value="butt">butt</option>
+                    <option value="round">round</option>
+                    <option value="square">square</option>
+                  </select>
+                </label>
+                <label>Join
+                  <select id="strokeJoin">
+                    <option value="miter">miter</option>
+                    <option value="round">round</option>
+                    <option value="bevel">bevel</option>
+                  </select>
+                </label>
+              </div>
+            </section>
+
+            <section class="sect">
+              <h3>Opacity</h3>
+              <div class="slider-row">
+                <input type="range" id="elOpacity" min="0" max="100" value="100" />
+                <span id="elOpacityVal">100%</span>
+              </div>
+            </section>
+
+            <section class="sect" id="sectRect" style="display:none">
+              <h3>Corner Radius</h3>
+              <input type="number" id="cornerRadius" min="0" step="1" value="0" />
+            </section>
+
+            <section class="sect" id="sectText" style="display:none">
+              <h3>Text</h3>
+              <textarea id="textContent" rows="2"></textarea>
+              <div class="grid2" style="margin-top:6px">
+                <label>Size <input type="number" id="textSize" min="1" step="1" value="24" /></label>
+                <label>Weight
+                  <select id="textWeight">
+                    <option value="300">Light</option>
+                    <option value="400" selected>Regular</option>
+                    <option value="600">Semibold</option>
+                    <option value="700">Bold</option>
+                  </select>
+                </label>
+              </div>
+            </section>
+
+            <section class="sect" id="sectPoly" style="display:none">
+              <h3>Polygon</h3>
+              <div class="grid2">
+                <label>Sides <input type="number" id="polySides" min="3" max="24" step="1" value="5" /></label>
+                <label class="inline-check">Star <input type="checkbox" id="polyStar" /></label>
+              </div>
+            </section>
+
+            <section class="sect" id="sectPath" style="display:none">
+              <h3>Path</h3>
+              <button class="tb tb-full" id="btnEditNodes">Edit Nodes</button>
+            </section>
+          </div>
+        </div>
+
+        <div class="layers-panel">
+          <div class="layers-head">
+            <span>Layers</span>
+            <span id="layerCount" class="badge">0</span>
+          </div>
+          <div class="layer-list" id="layerList"></div>
+        </div>
+      </aside>
+    </div>
+
+    <footer class="statusbar">
+      <span class="st-item"><span class="st-key">X</span> <b id="stX">0</b></span>
+      <span class="st-item"><span class="st-key">Y</span> <b id="stY">0</b></span>
+      <span class="st-divider"></span>
+      <span class="st-item">
+        <span class="st-key">Canvas</span>
+        <input type="number" id="stW" class="st-input" value="800" min="1" />
+        <span class="st-x">×</span>
+        <input type="number" id="stH" class="st-input" value="600" min="1" />
+      </span>
+      <span class="st-divider"></span>
+      <span class="st-item"><span class="st-key">Zoom</span> <b id="stZoom">100%</b></span>
+      <label class="st-item st-checkbox">
+        <input type="checkbox" id="chkGrid" checked /> Grid
+      </label>
+      <span class="st-hint" id="stHint">Select tool</span>
+    </footer>
+  </div>
+
+  <div class="modal-backdrop" id="exportModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>Export SVG</h2>
+        <button class="tb tb-icon" id="btnCloseModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <textarea id="exportCode" spellcheck="false" readonly></textarea>
+      </div>
+      <div class="modal-foot">
+        <button class="tb" id="btnCopyCode">Copy</button>
+        <button class="tb tb-accent" id="btnDownload2">Download .svg</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

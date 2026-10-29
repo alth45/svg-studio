@@ -1,0 +1,153 @@
+# ============================================================
+# SVG Studio — .gitignore
+# ============================================================
+
+# ---------- Dependencies ----------
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+jspm_packages/
+
+# ---------- Build output ----------
+dist/
+dist-ssr/
+build/
+out/
+*.local
+.vite/
+.vite-cache/
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# ---------- Vite ----------
+.vite/
+vite.config.*.timestamp-*
+*.timestamp-*.mjs
+
+# ---------- TypeScript ----------
+*.tsbuildinfo
+.tscache/
+
+# ---------- Testing ----------
+coverage/
+.nyc_output/
+*.lcov
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+
+# ---------- Environment files ----------
+.env
+.env.*
+!.env.example
+!.env.template
+
+# ---------- Logs ----------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# ---------- Cache / temp ----------
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+.temp/
+tmp/
+temp/
+*.swp
+*.swo
+*~
+
+# ---------- Editor / IDE ----------
+# VS Code (keep shared config)
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# JetBrains / WebStorm / IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Vim
+.vim/
+.gvimrc
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Atom
+.atom/
+
+# NetBeans
+/nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# ---------- OS artifacts ----------
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+ehthumbs.db
+Icon\r
+Thumbs.db
+
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.directory
+.Trash-*
+.nfs*
+
+# ---------- Package manager locks (keep one!) ----------
+# Keep the lockfile that your team uses.
+# Uncomment the ones you DON'T use:
+# package-lock.json      # if using yarn/pnpm
+# yarn.lock              # if using npm/pnpm
+# pnpm-lock.yaml         # if using npm/yarn
+
+# ---------- SVG Studio specific ----------
+# Exported drawings (keep source, not output)
+# exports/
+# *.export.svg
+
+# Local scratch files
+scratch/
+sandbox/
+*.scratch.*
+
+# ---------- Misc ----------
+.pnpm-store/
+.npm/
+.yarn/cache
+.yarn/install-state.gz
+.yarn/unplugged
+.yarn/build-state.yml
