@@ -1,3 +1,7 @@
+/* ============================================================
+ * config.ts — Constants & defaults
+ * ============================================================ */
+
 import type { StyleState } from './types';
 
 export const NS = 'http://www.w3.org/2000/svg';
@@ -14,13 +18,21 @@ export const CONFIG = {
   maxHistory: 50,
   minSize: 1,
   defaultShape: { w: 120, h: 80 },
+
+  /* Smart guides */
+  smartGuides: {
+    enabled: true,
+    thresholdScreen: 6,     // px (screen-space)
+    color: '#ff3d9a',
+  },
 };
 
 export const TOOL_KEYS: Record<string, string> = {
-  v: 'select', h: 'hand', r: 'rect', o: 'ellipse',
-  l: 'line', s: 'star', p: 'pen', t: 'text',
+  v: 'select', h: 'hand',
+  r: 'rect', o: 'ellipse', l: 'line', s: 'star',
   '1': 'triangle', '2': 'diamond', '3': 'hexagon', '4': 'octagon',
   '5': 'arrow',    '6': 'heart',   '7': 'cross',   '8': 'speech',
+  p: 'pen', t: 'text',
 };
 
 export const DEFAULT_STYLE: StyleState = {

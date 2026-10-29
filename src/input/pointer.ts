@@ -1,5 +1,5 @@
 /* ============================================================
- * input/pointer.ts — Pointer + context menu wiring
+ * input/pointer.ts — Pointer + context menu + smart guides
  * ============================================================ */
 
 import {
@@ -14,8 +14,10 @@ import { startCreate, buildShapeFromDrag } from '../tools/create';
 import { penClick } from '../tools/pen';
 import { createTextAt } from '../tools/text';
 import { translateAttrs, rotPoint } from '../geometry/transforms';
-import { unionBBox } from '../geometry/bbox';
+import { unionBBox, getBBoxOf } from '../geometry/bbox';
 import { CONFIG } from '../config';
+import { computeSnap, snapResize, renderGuides } from '../features/smartGuides';
+import type { BBox } from '../types';
 import {
   renderLive, renderAll, addElement, setTool,
   deleteSelection, duplicateSelection,
@@ -64,6 +66,25 @@ function parsePathDataSafe(d: string) {
 }
 
 /* ============================================================
+ * Helper: kumpulan ID yang harus dikecualikan dari snapping
+ * (selection + semua member grup yang terpilih)
+ * ============================================================ */
+function getExcludedIds(): Set<string> {
+  const ids = new Set(state.selection);
+  const groupIds = new Set<string>();
+  state.selection.forEach(id => {
+    const el = getElById(id);
+    if (el?.groupId) groupIds.add(el.groupId);
+  });
+  if (groupIds.size) {
+    for (const el of state.elements) {
+      if (el.groupId && groupIds.has(el.groupId)) ids.add(el.id);
+    }
+  }
+  return ids;
+}
+
+/* ============================================================
  * POINTER DOWN
  * ============================================================ */
 function onPointerDown(e: PointerEvent) {
@@ -77,7 +98,6 @@ function onPointerDown(e: PointerEvent) {
   const pt = toCanvas(e);
   const target = e.target as Element;
 
-  /* --- overlay handles --- */
   if (target.hasAttribute('data-handle')) {
     const el = getElById(target.getAttribute('data-elid')!);
     if (el) { startResize(e, el, target.getAttribute('data-handle')!); return; }
@@ -183,11 +203,46 @@ function onPointerMove(e: PointerEvent) {
       break;
 
     case 'move': {
-      let dx = pt.x - drag.start.x, dy = pt.y - drag.start.y;
+      let dx = pt.x - drag.start.x;
+      let dy = pt.y - drag.start.y;
+
       if (e.shiftKey) {
         if (Math.abs(dx) > Math.abs(dy)) dy = 0;
         else dx = 0;
       }
+
+      /* ---------- SMART GUIDES (snap) ---------- */
+      if (!e.altKey && CONFIG.smartGuides.enabled) {
+        // Bounding box gabungan semua elemen yang di-drag
+        const boxes: BBox[] = [];
+        for (const o of drag.orig) {
+          const b = getBBoxOf(o.el);
+          if (b) boxes.push(b);
+        }
+
+        if (boxes.length) {
+          let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
+          for (const b of boxes) {
+            x1 = Math.min(x1, b.x);
+            y1 = Math.min(y1, b.y);
+            x2 = Math.max(x2, b.x + b.width);
+            y2 = Math.max(y2, b.y + b.height);
+          }
+          const movingBox: BBox = {
+            x: x1 + dx, y: y1 + dy,
+            width: x2 - x1, height: y2 - y1,
+          };
+
+          const snap = computeSnap(movingBox, getExcludedIds());
+          dx += snap.dx;
+          dy += snap.dy;
+          renderGuides(snap.guides);
+        }
+      } else {
+        renderGuides([]);
+      }
+
+      /* ---------- Apply ---------- */
       for (const o of drag.orig) {
         o.el.attrs = translateAttrs(o.attrs, o.el.type, dx, dy);
         if (o.pivot) {
@@ -203,13 +258,30 @@ function onPointerMove(e: PointerEvent) {
       const el = drag.el;
       const local = drag.rot ? rotPoint(pt, drag.pivot, -drag.rot) : pt;
       const b0 = drag.box0;
-      let x1 = b0.x, y1 = b0.y, x2 = b0.x + b0.width, y2 = b0.y + b0.height;
       const k = drag.key;
+
+      let x1 = b0.x, y1 = b0.y, x2 = b0.x + b0.width, y2 = b0.y + b0.height;
       if (k.includes('w')) x1 = local.x;
       if (k.includes('e')) x2 = local.x;
       if (k.includes('n')) y1 = local.y;
       if (k.includes('s')) y2 = local.y;
 
+      /* ---------- SMART GUIDES (snap edges) ---------- */
+      const canSnap = !e.altKey
+        && CONFIG.smartGuides.enabled
+        && !drag.rot
+        && !e.shiftKey;   // skip proportional untuk hindari konflik
+
+      if (canSnap) {
+        const res = snapResize(x1, y1, x2, y2, k, getExcludedIds());
+        x1 = res.x1; y1 = res.y1;
+        x2 = res.x2; y2 = res.y2;
+        renderGuides(res.guides);
+      } else {
+        renderGuides([]);
+      }
+
+      /* Aspect-ratio constraint (hanya corner handle) */
       const isCorner = k.length === 2;
       if (e.shiftKey && isCorner && b0.width > 0.001 && b0.height > 0.001) {
         const ratio = b0.width / b0.height;
@@ -272,6 +344,8 @@ function onPointerMove(e: PointerEvent) {
  * POINTER UP
  * ============================================================ */
 function onPointerUp(_e: PointerEvent) {
+  renderGuides([]);   // clear smart guides
+
   if (!drag) return;
   const d = drag;
 
@@ -329,7 +403,6 @@ function onContextMenu(e: MouseEvent) {
   const target = e.target as Element;
   const holder = target.closest?.('[data-id]');
   const onOverlay = !!target.closest?.('#overlay');
-
   const onElement = !!holder || (state.selection.length > 0 && onOverlay);
 
   const items: MenuItem[] = [];
@@ -386,7 +459,6 @@ function onContextMenu(e: MouseEvent) {
       });
     }
   } else {
-    // Empty canvas — deselect + canvas menu
     state.selection = [];
     renderAll();
 
